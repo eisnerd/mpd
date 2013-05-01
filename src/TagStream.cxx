@@ -72,10 +72,23 @@ tag_stream_scan(InputStream &is, const tag_handler &handler, void *ctx)
 bool
 tag_stream_scan(const char *uri, const tag_handler &handler, void *ctx)
 {
+	Mutex mutex;
+	Cond cond;
+
+	InputStream *is = InputStream::OpenReady(uri, mutex, cond,
+						 IgnoreError());
+	if (is == nullptr)
+		return false;
+
+	bool success = tag_stream_scan(*is, handler, ctx);
+	delete is;
+
 	cmatch m;
-	static const regex path_metadata(R"(\A.*?Media/(?:.*/)?([^/]+)/+([^/]+)/+(?:([\d.]+)\W*[^\w(](?:\b|(?=())))?([^/]+?)(
-?:.([^./]+))?$)");
+	static const regex path_metadata(R"(\A.*?Media/(?:.*/)?([^/]+)/+([^/]+)/+(?:([\d.]+)\W*[^\w(](?:\b|(?=())))?([^/]+?)(?:.([^./]+))?$)");
 	if (regex_match(uri, m, path_metadata)) {
+		//if (song->tag == NULL)
+			//song->tag = tag_new();
+
 		int trk = 0;
 		std::string tk = m[3].str();
 		//char_separator<char> sep(".");
@@ -84,13 +97,16 @@ tag_stream_scan(const char *uri, const tag_handler &handler, void *ctx)
 		boost::split(tokens, tk, boost::is_any_of("."));
 		BOOST_FOREACH(std::string t, tokens)
 		{
-			trk *= 100;
 			try
 			{
-				trk += boost::lexical_cast<int>(t);
+				int x = boost::lexical_cast<int>(t);
+				trk *= 100;
+				trk += x;
 			} catch( boost::bad_lexical_cast const& ) { }
 		}
 
+		tag_clear_items_by_type(ctx, TAG_ARTIST);
+		//tag_clear_items_by_type(ctx, TAG_ALBUM);
 		tag_handler_invoke_tag(&handler, ctx, TAG_ARTIST, m[1].str().c_str());
 		tag_handler_invoke_tag(&handler, ctx, TAG_ALBUM, m[2].str().c_str());
 		tag_handler_invoke_tag(&handler, ctx, TAG_TRACK, std::to_string(trk).c_str());
@@ -103,18 +119,7 @@ tag_stream_scan(const char *uri, const tag_handler &handler, void *ctx)
 		g_message("trk %d", trk);
 		g_message("tit %s", m[4].str().c_str());
 #endif
-		return true;
 	}
 
-	Mutex mutex;
-	Cond cond;
-
-	InputStream *is = InputStream::OpenReady(uri, mutex, cond,
-						 IgnoreError());
-	if (is == nullptr)
-		return false;
-
-	bool success = tag_stream_scan(*is, handler, ctx);
-	delete is;
 	return success;
 }
