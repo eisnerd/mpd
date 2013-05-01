@@ -31,6 +31,7 @@ noinst_LIBRARIES = \
 libmpd_a_DEPENDENCIES =
 
 libmpd_a_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
 	$(LIBMPDCLIENT_CFLAGS) \
 	$(AVAHI_CFLAGS) \
 	$(LIBWRAP_CFLAGS) \
@@ -39,6 +40,8 @@ libmpd_a_CPPFLAGS = $(AM_CPPFLAGS) \
 src_mpd_LDADD = \
 	libmpd.a \
 	$(NEIGHBOR_LIBS) \
+	$(BOOST_LDFLAGS) \
+	-lboost_regex \
 	$(DB_LIBS) \
 	$(STORAGE_LIBS) \
 	$(PLAYLIST_LIBS) \

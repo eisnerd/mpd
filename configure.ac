@@ -274,6 +274,8 @@ winselect)
 	AC_MSG_ERROR([unknown pollmethod option: $with_pollmethod])
 esac
 
+AX_BOOST_BASE([1.46])
+
 dnl ---------------------------------------------------------------------------
 dnl Allow tools to be specifically built
 dnl ---------------------------------------------------------------------------
@@ -1804,6 +1806,7 @@ if test "x$enable_debug" = xno; then
 	AC_LANG_PUSH([C++])
 	AX_APPEND_COMPILE_FLAGS([-ffunction-sections])
 	AX_APPEND_COMPILE_FLAGS([-fdata-sections])
+	AX_APPEND_COMPILE_FLAGS([-fexceptions])
 	AC_LANG_POP
 
 	AX_APPEND_LINK_FLAGS([-Wl,--gc-sections])

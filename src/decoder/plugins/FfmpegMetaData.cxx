@@ -24,6 +24,7 @@
 #include "FfmpegMetaData.hxx"
 #include "tag/TagTable.hxx"
 #include "tag/TagHandler.hxx"
+#include <boost/regex.hpp>
 
 static const struct tag_table ffmpeg_tags[] = {
 	{ "year", TAG_DATE },
@@ -35,6 +36,8 @@ static const struct tag_table ffmpeg_tags[] = {
 	{ nullptr, TAG_NUM_OF_ITEM_TYPES }
 };
 
+static boost::regex delim("; +");
+
 static void
 ffmpeg_copy_metadata(TagType type,
 		     AVDictionary *m, const char *name,
@@ -43,8 +46,13 @@ ffmpeg_copy_metadata(TagType type,
 	AVDictionaryEntry *mt = nullptr;
 
 	while ((mt = av_dict_get(m, name, mt, 0)) != nullptr)
+	{
+		boost::cregex_token_iterator i(mt->value, mt->value + strlen(mt->value), delim, -1);
+		boost::cregex_token_iterator j;
+		while (i != j)
 		tag_handler_invoke_tag(handler, handler_ctx,
-				       type, mt->value);
+				       type, (i++)->str().c_str());
+	}
 }
 
 static void
