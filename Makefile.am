@@ -23,11 +23,14 @@ noinst_LIBRARIES = \
 	liboutput_plugins.a
 
 src_mpd_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
 	$(LIBMPDCLIENT_CFLAGS) \
 	$(AVAHI_CFLAGS) \
 	$(LIBWRAP_CFLAGS) \
 	$(SQLITE_CFLAGS)
 src_mpd_LDADD = \
+	$(BOOST_LDFLAGS) \
+	-lboost_regex \
 	$(DB_LIBS) \
 	$(PLAYLIST_LIBS) \
 	$(AVAHI_LIBS) \

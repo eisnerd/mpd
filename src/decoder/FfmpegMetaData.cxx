@@ -24,6 +24,7 @@
 #include "FfmpegMetaData.hxx"
 #include "tag_table.h"
 #include "tag_handler.h"
+#include <boost/regex.hpp>
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ffmpeg"
@@ -38,6 +39,8 @@ static const struct tag_table ffmpeg_tags[] = {
 	{ NULL, TAG_NUM_OF_ITEM_TYPES }
 };
 
+static boost::regex delim("; +");
+
 static void
 ffmpeg_copy_metadata(enum tag_type type,
 		     AVDictionary *m, const char *name,
@@ -46,8 +49,13 @@ ffmpeg_copy_metadata(enum tag_type type,
 	AVDictionaryEntry *mt = NULL;
 
 	while ((mt = av_dict_get(m, name, mt, 0)) != NULL)
+	{
+		boost::cregex_token_iterator i(mt->value, mt->value + strlen(mt->value), delim, -1);
+		boost::cregex_token_iterator j;
+		while (i != j)
 		tag_handler_invoke_tag(handler, handler_ctx,
-				       type, mt->value);
+				       type, (i++)->str().c_str());
+	}
 }
 
 static void
