@@ -131,39 +131,6 @@ song_file_update(struct song *song)
 	do {
 		/* load file tag */
 		song->tag = tag_new();
-		cmatch m;
-		static const regex path_metadata("\\A.*?Media/(?:.*/)?([^/]+)/+([^/]+)/+(?:([\\d.]+)\\W*[^\\w(](?:\\b|(?=())))?([^/]+?)(?:.([^./]+))?$");
-		if (regex_match(path_fs.c_str(), m, path_metadata)) {
-
-			int trk = 0;
-			std::string tk = m[3].str();
-			//char_separator<char> sep(".");
-			//tokenizer<char_separator<char>> tokens(m[3].str(), sep);
-			std::vector<std::string> tokens;
-			boost::split(tokens, tk, boost::is_any_of("."));
-			BOOST_FOREACH(std::string t, tokens)
-			{
-				trk *= 100;
-				try
-				{
-					trk += boost::lexical_cast<int>(t);
-				} catch( boost::bad_lexical_cast const& ) { }
-			}
-
-			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_ARTIST, m[1].str().c_str());
-			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_ALBUM, m[2].str().c_str());
-			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_TRACK, std::to_string(trk).c_str());
-			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_TITLE, m[5].str().c_str());
-			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_GENRE, m[6].str().c_str());
-
-#ifdef REGEX_DEBUG
-			g_message("art %s", m[1].str().c_str());
-			g_message("alb %s", m[2].str().c_str());
-			g_message("trk %d", trk);
-			g_message("tit %s", m[4].str().c_str());
-#endif
-			break;
-		} else
 		if (decoder_plugin_scan_file(plugin, path_fs.c_str(),
 					     &full_tag_handler, song->tag))
 			break;
@@ -202,6 +169,43 @@ song_file_update(struct song *song)
 	if (is != NULL)
 		input_stream_close(is);
 
+		cmatch m;
+		static const regex path_metadata("\\A.*?Media/(?:.*/)?([^/]+)/+([^/]+)/+(?:([\\d.]+)\\W*[^\\w(](?:\\b|(?=())))?([^/]+?)(?:.([^./]+))?$");
+		if (regex_match(path_fs.c_str(), m, path_metadata)) {
+			if (song->tag == NULL)
+				song->tag = tag_new();	
+
+			int trk = 0;
+			std::string tk = m[3].str();
+			//char_separator<char> sep(".");
+			//tokenizer<char_separator<char>> tokens(m[3].str(), sep);
+			std::vector<std::string> tokens;
+			boost::split(tokens, tk, boost::is_any_of("."));
+			BOOST_FOREACH(std::string t, tokens)
+			{
+				try
+				{
+					int x = boost::lexical_cast<int>(t);
+					trk *= 100;
+					trk += x;
+				} catch( boost::bad_lexical_cast const& ) { }
+			}
+
+			tag_clear_items_by_type(song->tag, TAG_ARTIST);
+			//tag_clear_items_by_type(song->tag, TAG_ALBUM);
+			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_ARTIST, m[1].str().c_str());
+			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_ALBUM, m[2].str().c_str());
+			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_TRACK, std::to_string(trk).c_str());
+			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_TITLE, m[5].str().c_str());
+			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_GENRE, m[6].str().c_str());
+
+#ifdef REGEX_DEBUG
+			g_message("art %s", m[1].str().c_str());
+			g_message("alb %s", m[2].str().c_str());
+			g_message("trk %d", trk);
+			g_message("tit %s", m[4].str().c_str());
+#endif
+		}
 	if (song->tag != NULL && tag_is_empty(song->tag))
 		tag_scan_fallback(path_fs.c_str(), &full_tag_handler,
 				  song->tag);
