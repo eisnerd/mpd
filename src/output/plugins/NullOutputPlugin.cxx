@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "NullOutputPlugin.hxx"
+#include "../../mixer/MixerList.hxx"
 #include "../OutputAPI.hxx"
 #include "../Timer.hxx"
 
@@ -134,5 +135,5 @@ const struct AudioOutputPlugin null_output_plugin = {
 	nullptr,
 	null_cancel,
 	nullptr,
-	nullptr,
+	&software_mixer_plugin,
 };
