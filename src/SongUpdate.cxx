@@ -90,6 +90,8 @@ tag_scan_fallback(const char *path,
 		tag_id3_scan(path, handler, handler_ctx);
 }
 
+const char *pre = "Untagged/";
+const char *ext = "External/";
 bool
 song_file_update(struct song *song)
 {
@@ -117,6 +119,15 @@ song_file_update(struct song *song)
 	if (song->tag != NULL) {
 		tag_free(song->tag);
 		song->tag = NULL;
+	}
+
+	//g_message("Path %s, parent %s, uri %s", path_fs.c_str(), song->parent->GetPath(), song->uri);
+	if (strncmp(pre, song->parent->GetPath(), strlen(pre)) == 0
+	 || strncmp(ext, song->parent->GetPath(), strlen(ext)) == 0)
+	{
+		song->tag = tag_new();
+		tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_TITLE, song->uri);
+		return true;
 	}
 
 	if (!StatFile(path_fs, st) || !S_ISREG(st.st_mode)) {
