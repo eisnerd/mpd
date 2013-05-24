@@ -78,6 +78,8 @@ tag_scan_fallback(Path path,
 
 #ifdef ENABLE_DATABASE
 
+const char *pre = "Untagged/";
+const char *ext = "External/";
 bool
 Song::UpdateFile(Storage &storage)
 {
@@ -100,12 +102,18 @@ Song::UpdateFile(Storage &storage)
 				     full_tag_handler, &tag_builder))
 			return false;
 	} else {
-		if (!tag_file_scan(path_fs, full_tag_handler, &tag_builder))
-			return false;
+		//g_message("Path %s, parent %s, uri %s", path_fs.c_str(), song->parent->GetPath(), song->uri);
+		if (strncmp(pre, relative_uri.c_str(), strlen(pre)) == 0
+		 || strncmp(ext, relative_uri.c_str(), strlen(ext)) == 0) {
+			tag_handler_invoke_tag(&full_tag_handler, &tag_builder, TAG_TITLE, relative_uri.c_str());
+		} else {
+			if (!tag_file_scan(path_fs, full_tag_handler, &tag_builder))
+				return false;
 
-		if (tag_builder.IsEmpty())
-			tag_scan_fallback(path_fs, &full_tag_handler,
-					  &tag_builder);
+			if (tag_builder.IsEmpty())
+				tag_scan_fallback(path_fs, &full_tag_handler,
+						  &tag_builder);
+		}
 	}
 
 	mtime = info.mtime;
