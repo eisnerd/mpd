@@ -92,20 +92,16 @@ Song::UpdateFile(Storage &storage)
 	if (!info.IsRegular())
 		return false;
 
-	TagBuilder tag_builder;
+	{
+		TagBuilder tag_builder;
 
-	const auto path_fs = storage.MapFS(relative_uri.c_str());
-	if (path_fs.IsNull()) {
-		const auto absolute_uri =
-			storage.MapUTF8(relative_uri.c_str());
-		if (!tag_stream_scan(absolute_uri.c_str(),
-				     full_tag_handler, &tag_builder))
-			return false;
-	} else {
-		//g_message("Path %s, parent %s, uri %s", path_fs.c_str(), song->parent->GetPath(), song->uri);
-		if (strncmp(pre, relative_uri.c_str(), strlen(pre)) == 0
-		 || strncmp(ext, relative_uri.c_str(), strlen(ext)) == 0) {
-			tag_handler_invoke_tag(&full_tag_handler, &tag_builder, TAG_TITLE, relative_uri.c_str());
+		const auto path_fs = storage.MapFS(relative_uri.c_str());
+		if (path_fs.IsNull()) {
+			const auto absolute_uri =
+				storage.MapUTF8(relative_uri.c_str());
+			if (!tag_stream_scan(absolute_uri.c_str(),
+						 full_tag_handler, &tag_builder))
+				return false;
 		} else {
 			if (!tag_file_scan(path_fs, full_tag_handler, &tag_builder))
 				return false;
@@ -114,10 +110,28 @@ Song::UpdateFile(Storage &storage)
 				tag_scan_fallback(path_fs, &full_tag_handler,
 						  &tag_builder);
 		}
+
+		mtime = info.mtime;
+		tag_builder.Commit(tag);
 	}
 
-	mtime = info.mtime;
-	tag_builder.Commit(tag);
+	//g_message("Path %s, parent %s, uri %s", path_fs.c_str(), song->parent->GetPath(), song->uri);
+	if (strncmp(pre, relative_uri.c_str(), strlen(pre)) == 0
+	 || strncmp(ext, relative_uri.c_str(), strlen(ext)) == 0) {
+		const char *a = tag.GetValue(TAG_ARTIST);
+		TagBuilder tag_builder(tag);
+
+		tag_builder.RemoveType(TAG_GENRE);
+		if (a)
+			tag_builder.AddItem(TAG_GENRE, a);
+		tag_builder.RemoveType(TAG_ARTIST);
+		tag_builder.RemoveType(TAG_TRACK);
+
+		tag_builder.AddItem(TAG_TITLE, relative_uri.c_str());
+
+		tag_builder.Commit(tag);
+	}
+
 	return true;
 }
 
