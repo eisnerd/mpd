@@ -121,15 +121,6 @@ song_file_update(struct song *song)
 		song->tag = NULL;
 	}
 
-	//g_message("Path %s, parent %s, uri %s", path_fs.c_str(), song->parent->GetPath(), song->uri);
-	if (strncmp(pre, song->parent->GetPath(), strlen(pre)) == 0
-	 || strncmp(ext, song->parent->GetPath(), strlen(ext)) == 0)
-	{
-		song->tag = tag_new();
-		tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_TITLE, song->uri);
-		return true;
-	}
-
 	if (!StatFile(path_fs, st) || !S_ISREG(st.st_mode)) {
 		return false;
 	}
@@ -179,6 +170,25 @@ song_file_update(struct song *song)
 
 	if (is != NULL)
 		input_stream_close(is);
+
+		g_message("Path %s, parent %s, uri %s", path_fs.c_str(), song->parent->GetPath(), song->uri);
+		if (strncmp(pre, song->parent->GetPath(), strlen(pre)) == 0
+		 || strncmp(ext, song->parent->GetPath(), strlen(ext)) == 0)
+		{
+			if (song->tag == NULL)
+				song->tag = tag_new();
+			else
+			{
+				tag_clear_items_by_type(song->tag, TAG_GENRE);
+				const char *a = tag_get_value(song->tag, TAG_ARTIST);
+				if (a)
+					tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_GENRE, a);
+				tag_clear_items_by_type(song->tag, TAG_ARTIST);
+				tag_clear_items_by_type(song->tag, TAG_TRACK);
+			}
+			tag_handler_invoke_tag(&full_tag_handler, song->tag, TAG_TITLE, song->uri);
+			return true;
+		}
 
 		cmatch m;
 		static const regex path_metadata("\\A.*?Media/(?:.*/)?([^/]+)/+([^/]+)/+(?:([\\d.]+)\\W*[^\\w(](?:\\b|(?=())))?([^/]+?)(?:.([^./]+))?$");
