@@ -150,6 +150,59 @@ handle_sticker_song(Client &client, unsigned argc, char *argv[])
 }
 
 CommandResult
+handle_sticker_global(Client &client, unsigned argc, char *argv[])
+{
+	/* get song song_id key */
+	if (argc == 5 && strcmp(argv[1], "get") == 0) {
+		const auto value = sticker_load_value(argv[2], argv[3], argv[4]);
+		if (value.empty()) {
+			command_error(client, ACK_ERROR_NO_EXIST,
+				      "no such sticker");
+			return CommandResult::ERROR;
+		}
+
+		sticker_print_value(client, argv[4], value.c_str());
+
+		return CommandResult::OK;
+	/* list song song_id */
+	} else if (argc == 4 && strcmp(argv[1], "list") == 0) {
+		sticker *sticker = sticker_load(argv[2], argv[3]);
+		if (sticker) {
+			sticker_print(client, *sticker);
+			sticker_free(sticker);
+		}
+
+		return CommandResult::OK;
+	/* set song song_id id key */
+	} else if (argc == 6 && strcmp(argv[1], "set") == 0) {
+		bool ret = sticker_store_value(argv[2], argv[3], argv[4], argv[5]);
+		if (!ret) {
+			command_error(client, ACK_ERROR_SYSTEM,
+				      "failed to set sticker value");
+			return CommandResult::ERROR;
+		}
+
+		return CommandResult::OK;
+	/* delete song song_id [key] */
+	} else if ((argc == 4 || argc == 5) &&
+		   strcmp(argv[1], "delete") == 0) {
+		bool ret = argc == 4
+			? sticker_delete(argv[2], argv[3])
+			: sticker_delete_value(argv[2], argv[3], argv[4]);
+		if (!ret) {
+			command_error(client, ACK_ERROR_SYSTEM,
+				      "no such sticker");
+			return CommandResult::ERROR;
+		}
+
+		return CommandResult::OK;
+	} else {
+		command_error(client, ACK_ERROR_ARG, "bad request");
+		return CommandResult::ERROR;
+	}
+}
+
+CommandResult
 handle_sticker(Client &client, unsigned argc, char *argv[])
 {
 	assert(argc >= 4);
@@ -162,6 +215,8 @@ handle_sticker(Client &client, unsigned argc, char *argv[])
 
 	if (strcmp(argv[2], "song") == 0)
 		return handle_sticker_song(client, argc, argv);
+	else if (strcmp(argv[2], "global") == 0)
+		return handle_sticker_global(client, argc, argv);
 	else {
 		command_error(client, ACK_ERROR_ARG,
 			      "unknown sticker domain");

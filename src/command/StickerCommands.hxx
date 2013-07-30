@@ -25,6 +25,9 @@
 class Client;
 
 CommandResult
+handle_sticker_global(Client &client, unsigned argc, char *argv[]);
+
+CommandResult
 handle_sticker(Client &client, unsigned argc, char *argv[]);
 
 #endif
