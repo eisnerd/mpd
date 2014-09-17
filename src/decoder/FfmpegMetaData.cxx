@@ -65,6 +65,9 @@ ffmpeg_scan_pairs(AVDictionary *dict,
 	AVDictionaryEntry *i = NULL;
 
 	while ((i = av_dict_get(dict, "", i, AV_DICT_IGNORE_SUFFIX)) != NULL)
+		if (strcmp(i->key, "---:com.apple.iTunes:replaygain_track_gain"))
+			{}
+		else
 		tag_handler_invoke_pair(handler, handler_ctx,
 					i->key, i->value);
 }
