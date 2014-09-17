@@ -19,7 +19,6 @@
 
 #include "config.h"
 #include "TagStream.hxx"
-#include "tag/TagHandler.hxx"
 #include "util/UriUtil.hxx"
 #include "util/Error.hxx"
 #include "decoder/DecoderList.hxx"
@@ -29,13 +28,6 @@
 #include "thread/Cond.hxx"
 
 #include <assert.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
-using namespace boost;
 
 /**
  * Does the #DecoderPlugin support either the suffix or the MIME type?
@@ -82,44 +74,5 @@ tag_stream_scan(const char *uri, const tag_handler &handler, void *ctx)
 
 	bool success = tag_stream_scan(*is, handler, ctx);
 	delete is;
-
-	cmatch m;
-	static const regex path_metadata(R"(\A.*?Media/(?:.*/)?([^/]+)/+([^/]+)/+(?:([\d.]+)\W*[^\w(](?:\b|(?=())))?([^/]+?)(?:.([^./]+))?$)");
-	if (regex_match(uri, m, path_metadata)) {
-		//if (song->tag == NULL)
-			//song->tag = tag_new();
-
-		int trk = 0;
-		std::string tk = m[3].str();
-		//char_separator<char> sep(".");
-		//tokenizer<char_separator<char>> tokens(m[3].str(), sep);
-		std::vector<std::string> tokens;
-		boost::split(tokens, tk, boost::is_any_of("."));
-		BOOST_FOREACH(std::string t, tokens)
-		{
-			try
-			{
-				int x = boost::lexical_cast<int>(t);
-				trk *= 100;
-				trk += x;
-			} catch( boost::bad_lexical_cast const& ) { }
-		}
-
-		tag_clear_items_by_type(ctx, TAG_ARTIST);
-		//tag_clear_items_by_type(ctx, TAG_ALBUM);
-		tag_handler_invoke_tag(&handler, ctx, TAG_ARTIST, m[1].str().c_str());
-		tag_handler_invoke_tag(&handler, ctx, TAG_ALBUM, m[2].str().c_str());
-		tag_handler_invoke_tag(&handler, ctx, TAG_TRACK, std::to_string(trk).c_str());
-		tag_handler_invoke_tag(&handler, ctx, TAG_TITLE, m[5].str().c_str());
-		tag_handler_invoke_tag(&handler, ctx, TAG_GENRE, m[6].str().c_str());
-
-#ifdef REGEX_DEBUG
-		g_message("art %s", m[1].str().c_str());
-		g_message("alb %s", m[2].str().c_str());
-		g_message("trk %d", trk);
-		g_message("tit %s", m[4].str().c_str());
-#endif
-	}
-
 	return success;
 }

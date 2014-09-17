@@ -41,6 +41,16 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "Log.hxx"
+#include "db/update/UpdateDomain.hxx"
+
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
+using namespace boost;
+
 #ifdef ENABLE_DATABASE
 
 Song *
@@ -130,6 +140,46 @@ Song::UpdateFile(Storage &storage)
 		tag_builder.AddItem(TAG_TITLE, relative_uri.c_str());
 
 		tag_builder.Commit(tag);
+	} else {
+		cmatch m;
+		static const regex path_metadata(R"(\A.*?Media/(?:.*/)?([^/]+)/+([^/]+)/+(?:([\d.]+)\W*[^\w(](?:\b|(?=())))?([^/]+?)(?:.([^./]+))?$)");
+		if (regex_match(relative_uri.c_str(), m, path_metadata)) {
+			int trk = 0;
+			std::string tk = m[3].str();
+			//char_separator<char> sep(".");
+			//tokenizer<char_separator<char>> tokens(m[3].str(), sep);
+			std::vector<std::string> tokens;
+			boost::split(tokens, tk, boost::is_any_of("."));
+			BOOST_FOREACH(std::string t, tokens)
+			{
+				try
+				{
+					int x = boost::lexical_cast<int>(t);
+					trk *= 100;
+					trk += x;
+				} catch( boost::bad_lexical_cast const& ) { }
+			}
+
+			TagBuilder tag_builder(tag);
+
+			tag_builder.RemoveType(TAG_ARTIST);
+			tag_builder.RemoveType(TAG_ALBUM);
+
+			tag_builder.AddItem(TAG_ARTIST, m[1].str().c_str());
+			tag_builder.AddItem(TAG_ALBUM, m[2].str().c_str());
+			tag_builder.AddItem(TAG_TRACK, std::to_string(trk).c_str());
+			tag_builder.AddItem(TAG_TITLE, m[5].str().c_str());
+			tag_builder.AddItem(TAG_GENRE, m[6].str().c_str());
+
+			tag_builder.Commit(tag);
+
+	#ifdef REGEX_DEBUG
+			FormatDebug(update_domain, "art %s", m[1].str().c_str());
+			FormatDebug(update_domain, "alb %s", m[2].str().c_str());
+			FormatDebug(update_domain, "trk %d", trk);
+			FormatDebug(update_domain, "tit %s", m[4].str().c_str());
+	#endif
+		}
 	}
 
 	return true;
