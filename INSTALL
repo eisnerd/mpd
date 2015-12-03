@@ -12,6 +12,12 @@ install MPD.  If more information is desired, read the user manual:
 Dependencies
 ------------
 
+A large selection for Ubuntu:
+
+sudo apt-get install libboost-dev libboost-regex-dev libboost-filesystem-dev libglib2.0-dev libmpdclient-dev libexpat1-dev libwrap0-dev libid3tag0-dev libavahi-client-dev libsqlite3-dev libsamplerate0-dev libsoxr-dev libcurl4-gnutls-dev libsmbclient-dev libnfs-dev libyajl-dev libcdio-paranoia-dev libmms-dev libbz2-dev libupnp-dev libupnp6-dev libadplug-dev libaudiofile-dev libfaad-dev libavformat-dev libavformat-ffmpeg-dev libavcodec-dev libavcodec-ffmpeg-dev libavutil-dev libavutil-ffmpeg-dev libflac-dev fluidsynth libfluidsynth-dev libgme-dev libmad0-dev libshout3-dev libmpg123-dev libmodplug-dev libopus-dev libsndfile1-dev libmpcdec-dev libvorbis-dev libao-dev libopenal-dev libshine-dev libtwolame-dev
+
+Essentials:
+
 gcc 4.6 or later - http://gcc.gnu.org/
 clang 3.2 or later - http://clang.llvm.org/
 Any other C++11 compliant compiler should also work.
